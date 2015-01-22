@@ -1,7 +1,12 @@
+html, body {
+    background: url("../img/bg.png") repeat scroll 0 0 rgba(0, 0, 0, 0);
+}
+
 body {
   padding-top: 50px;
   font-family: "Open Sans", "Helvetica Neue",Helvetica,Arial,sans-serif;
 }
+
 .starter-template {
   padding: 40px 15px;
   text-align: center;
