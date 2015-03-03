@@ -31,19 +31,19 @@ mixin menuItem(text, uri, active)
   
 mixin body(options)
   body&attributes(attributes)
-    nav.navbar.navbar-inverse(role='navigation')
-      .container
-        .navbar-header
-          button.navbar-toggle.collapsed(type='button', data-toggle='collapse', data-target='#navbar', aria-expanded='false', aria-controls='navbar')
-            span.sr-only Toggle navigation
-            span.icon-bar
-            span.icon-bar
-            span.icon-bar
-        #navbar.collapse.navbar-collapse
-          ul.nav.navbar-nav
-            +menuItem('Home','index.html', options.currentPage)
-            +menuItem('About','about.html', options.currentPage)
-            +menuItem('Contact','contact.html', options.currentPage)
+    if options.navbar
+      nav.navbar.navbar-inverse(role='navigation')
+        .container
+          .navbar-header
+            button.navbar-toggle.collapsed(type='button', data-toggle='collapse', data-target='#navbar', aria-expanded='false', aria-controls='navbar')
+              span.sr-only Toggle navigation
+              span.icon-bar
+              span.icon-bar
+              span.icon-bar
+          #navbar.collapse.navbar-collapse
+            ul.nav.navbar-nav
+              for menuItem in options.menuItems
+                +menuItem(menuItem.title, menuItem.url, options.currentPage)
     .container.clearfix
       block
 
@@ -60,11 +60,10 @@ mixin body(options)
         (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
         m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
         })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-        ga('create', options.ga, 'auto');
+        ga('create', "#{options.ga}", 'auto');
         ga('send', 'pageview');
     // Placed at the end of the document so the pages load faster
     script(src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js')
     script(src='js/vendor/bootstrap.js')
     // IE10 viewport hack for Surface/desktop Windows 8 bug
     script(src='js/vendor/ie10-viewport-bug-workaround.js')
-
