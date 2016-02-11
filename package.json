@@ -1,0 +1,20 @@
+{
+  "name": "mrotaru.co.uk",
+  "version": "1.0.0",
+  "description": "Mihai Rotaru's personal website",
+  "main": "index.js",
+  "scripts": {
+    "build": "rm -rf build/ && mkdir build && jade . --out build && cp -r static build",
+    "deploy": "aws s3 sync ./build s3://mrotaru.co.uk/ --profile \"mrotaru.co.uk-s3\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mrotaru/mrotaru.co.uk.git"
+  },
+  "author": "Mihai Rotaru <mihai.rotaru@gmx.com> (http://mrotaru.co.uk/)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mrotaru/mrotaru.co.uk/issues"
+  },
+  "homepage": "http://mrotaru.co.uk"
+}
