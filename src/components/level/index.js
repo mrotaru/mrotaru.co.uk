@@ -11,7 +11,7 @@ const Level = ({level, label = ''}) => {
 		case 4: char = '⚃'; title = 'Proficient'; break;
 		case 5: char = '⚄'; title = 'Expert'; break;
 	}
-	return <span class='skill' title={title} style={style.level}>{char}{label}</span>
+	return <span title={title} class={style.level}>{char}{label}</span>
 }
 
 export default Level;
