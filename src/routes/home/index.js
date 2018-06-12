@@ -8,10 +8,6 @@ const Home = () => (
 	<div class={style.home}>
 		<h1>Mihai Rotaru</h1>
 		<p>Full stack web developer based in London</p>
-		<aside class={style.badges}>
-			<StackExchangeBadge fullName='Mihai Rotaru' userId='201300' />
-			{/* <GitHubBadge handle='mrotaru' /> */}
-		</aside>
 		<h2>Expertise</h2>
 		<ul>
 			<li>In-depth knowledge of vanilla <Skill name='JavaScript'/> and <Skill name='Node.js' />, including <Skill name='ES6/7' /> features</li>
@@ -43,6 +39,14 @@ const Home = () => (
 			<li>12.'15 - 06.'16 - front-end developer for Thortful, greeting card startup</li>
 			<li>01.'14 - 12.'15 - sole full-stack develpoer for a travel startup, Trufflecat</li>
 			<li>01.'13 - 08.'13 - full-stack contracting for Pep Publishing, a media company </li>
+		</ul>
+		<h2>Around the Web</h2>
+		<aside class={style.badges}>
+			<StackExchangeBadge fullName='Mihai Rotaru' userId='201300' />
+		</aside>
+		<ul>
+			<li>GitHub: <a href='https://github.com/mrotaru'>https://github.com/mrotaru</a></li>
+			<li>Codepen: <a href='https://codepen.io/mrotaru'>https://codepen.io/mrotaru</a></li>
 		</ul>
 	</div>
 );
