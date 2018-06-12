@@ -1,6 +1,5 @@
 import { h } from 'preact';
 import style from './style';
-import Level from '../../components/level'
 import Skill from '../../components/skill'
 
 const Home = () => (
@@ -26,11 +25,11 @@ const Home = () => (
 			<li>Clean code - readability is king; keep things simple and explicit, avoid "smart" and "magic"</li>
 			<li>A test-driven development process leads to higher quality software</li>
 			<li>Most tests should be fast unit tests, with a few integration tests for the whole system</li>
-			<li>Preffer functional programming and avoid side effects whenever possible</li>
+			<li>Preffer <Skill name='functional programming' /> and avoid side effects whenever possible</li>
 			<li>Preffer face to face stakeholder conversations to heavy tools such as JIRA</li>
 			<li><strong>Scrum</strong> provides a good framework for managing Agile processes, and can be enhanced further with <strong>Kanban</strong></li>
 			<li>Cautios of "we'll fix it later" - compromising code quality is rarely worth it, even in the short term</li>
-			<li>Avoid writing code that <em>might</em> be needed in the future; <strong>YAGNI</strong></li>
+			<li>Avoid writing code that <em>might</em> be needed in the future; <strong><abbr title="You Ain't Gonna Need It">YAGNI</abbr></strong></li>
 		</ul>
 		<h2>Experience</h2>
 		<ul>
