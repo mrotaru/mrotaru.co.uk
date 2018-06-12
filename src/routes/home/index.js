@@ -1,11 +1,17 @@
 import { h } from 'preact';
 import style from './style';
 import Skill from '../../components/skill'
+import StackExchangeBadge from '../../components/stack-exchange-badge'
+import GitHubBadge from '../../components/github-badge'
 
 const Home = () => (
 	<div class={style.home}>
 		<h1>Mihai Rotaru</h1>
 		<p>Full stack web developer based in London</p>
+		<aside class={style.badges}>
+			<StackExchangeBadge fullName='Mihai Rotaru' userId='201300' />
+			{/* <GitHubBadge handle='mrotaru' /> */}
+		</aside>
 		<h2>Expertise</h2>
 		<ul>
 			<li>In-depth knowledge of vanilla <Skill name='JavaScript'/> and <Skill name='Node.js' />, including <Skill name='ES6/7' /> features</li>
