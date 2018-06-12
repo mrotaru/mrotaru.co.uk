@@ -47,6 +47,7 @@ const Home = () => (
 		<ul>
 			<li>GitHub: <a href='https://github.com/mrotaru'>https://github.com/mrotaru</a></li>
 			<li>Codepen: <a href='https://codepen.io/mrotaru'>https://codepen.io/mrotaru</a></li>
+			<li>Email: <a href='mailto:mihai.rotaru@gmx.com'>mihai.rotaru@gmx.com</a></li>
 		</ul>
 	</div>
 );

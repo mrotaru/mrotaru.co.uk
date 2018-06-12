@@ -7,6 +7,7 @@
     "start": "if-env NODE_ENV=production && npm run -s serve || npm run -s dev",
     "build": "preact build",
     "serve": "preact build && preact serve",
+    "deploy": "aws s3 sync ./build s3://mrotaru.co.uk/ --profile \"mrotaru.co.uk-s3\"",
     "dev": "preact watch",
     "lint": "eslint src",
     "test": "jest ./tests"
