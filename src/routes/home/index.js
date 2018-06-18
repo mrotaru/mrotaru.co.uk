@@ -1,13 +1,13 @@
 import { h } from 'preact';
-import style from './style';
 import Skill from '../../components/skill'
 import StackExchangeBadge from '../../components/stack-exchange-badge'
 import GitHubBadge from '../../components/github-badge'
 
 const Home = () => (
-	<div class={style.home}>
+	<div>
 		<h1>Mihai Rotaru</h1>
 		<p>Full stack web developer based in London</p>
+		<h4>Latest Blog Post: <a href='/blog/javascript-prototypes'>JavaScript Prototypes</a></h4>
 		<h2>Expertise</h2>
 		<ul>
 			<li>In-depth knowledge of vanilla <Skill name='JavaScript'/> and <Skill name='Node.js' />, including <Skill name='ES6/7' /> features</li>
@@ -41,7 +41,7 @@ const Home = () => (
 			<li>01.'13 - 08.'13 - full-stack contracting for Pep Publishing, a media company </li>
 		</ul>
 		<h2>Around the Web</h2>
-		<aside class={style.badges}>
+		<aside>
 			<StackExchangeBadge fullName='Mihai Rotaru' userId='201300' />
 		</aside>
 		<ul>
