@@ -1,0 +1,240 @@
+<h1 id="javascript-prototypes">JavaScript Prototypes</h1>
+<p><small>Author: <a href="https://mrotaru.co.uk">Mihai Rotaru</a></small> <small>Date: 2018-06-14</small></p>
+<p>JavaScript is a prototype-based language, thus it should come as no surprise
+that a good grasp of how prototypes work is essential to any serious
+JavaScript developer. I&#39;ve struggled with it, until I read <a href="https://github.com/getify/You-Dont-Know-JS/blob/master/this%20%26%20object%20prototypes/ch5.md">Kyle Simpson&#39;s
+book</a>
+on the subject, which I cannot recommend enough. I wrote this post to
+solidify my understanding; &quot;if you can&#39;t explain it, you don&#39;t understand
+it&quot;. As it turns out, the prototype mechanism is actually very simple and
+elegant. However, it is not ideally suited for object-oriented programming as
+in other languages, such as Java or C++. Using it like that complicates
+things, but given that it is a common pattern it is still important to
+understand all the implications; ES6 <code>class</code>es do not supersede the prototype
+mechanism.</p>
+<h2 id="what-is-a-prototype-">What is a Prototype ?</h2>
+<p>A prototype is just an object that is referenced by <em>other</em> objects via an
+internal property. This allows one object access to properties (including
+functions) which are actually set on <em>another</em> object. The JavaScript spec
+calls this internal property &quot;<code>[[Prototype]]</code> internal slot&quot;
+<a href="http://www.ecma-international.org/ecma-262/6.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots">(§ 9.1)</a>
+and it is <em>not</em> the same thing as the <code>prototype</code> property; more on this later. When we say that
+&quot;<code>foo</code> is prototype-linked to <code>bar</code>&quot; it means that <code>foo</code>&#39;s internal
+<code>[[Prototype]]</code> is a reference to <code>bar</code>.</p>
+<h2 id="default-prototype-links">Default Prototype Links</h2>
+<p>You probably know that all objects somehow have access to functions like <code>toString()</code> and <code>hasOwnProperty()</code>, without
+you having to do anything. This is because all objects have <code>Object.prototype</code> in their prototype chain by default,
+and properties are resolved recursively. If an object doesn&#39;t have the property we&#39;re trying to access,
+the prototype chain will be traversed until it is found, or <code>undefined</code> is returned. <code>Object.prototype</code> is
+normally the last link in the prototype chain, and it&#39;s <code>[[Prototype]]</code> is <code>null</code>.</p>
+<pre><code class="language-js">const foo = { x: 42 } // by default, foo is prototype-linked to Object.prototype
+Object.getPrototypeOf(foo) === Object.prototype // =&gt; true
+foo.toString() // =&gt; &#39;[object Object]&#39; - inherited from Object.prototype
+foo.hasOwnProperty(&#39;x&#39;) // =&gt; true
+foo.hasOwnProperty(&#39;toString&#39;) // =&gt; false</code></pre>
+<p><img src="fig-1.svg" alt="Default prototype link"></p>
+<h2 id="creating-prototype-links-explicitly">Creating Prototype Links - Explicitly</h2>
+<p>There are two other ways of creating prototype links: one is direct (explicit) and the other
+one is indirect (implicit). The direct way is by using <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/create"><code>Object.create()</code></a>.
+It will return a new object,
+with it&#39;s internal <code>[[Prototype]]</code> pointing to the object provided as the first parameter. <code>[[Prototype]]</code>
+can be accessed directly as the <code>__proto__</code> property, although it is recommend to use <code>Object.getPrototypeOf()</code> instead.
+The <code>prototype</code> property is <strong>not</strong> synonymous with <code>[[Prototype]]</code>, more on this later on.</p>
+<pre><code class="language-js">const foo = { x: 42 }
+const bar = Object.create(foo) // bar is prototype-linked to foo
+Object.getPrototypeOf(bar) === foo // =&gt; true
+bar.__proto__ === foo // =&gt; true
+bar.x // =&gt; 42 - x was inherited from foo, through the prototype chain
+bar.toString() // =&gt; &#39;[object Object]&#39; - toString() is inherited from Object.prototype</code></pre>
+<p><img src="./fig-2.svg" alt="Direct, explicit prototype link"></p>
+<h3 id="function-objects">Function Objects</h3>
+<p>In JavaScript, functions are &quot;first-class objects&quot;. This means that we can
+treat them as any other object - add and remove properties, pass them as
+parameters, and so on. It also means that they have <code>Object.prototype</code> in
+their prototype chain; so we can call familiar methods such as <code>toString()</code>
+and <code>hasOwnProperty()</code>. You probably know that function objects have a few
+more tricks up their sleeve; for example, when you invoke the <code>call()</code> method
+of a function object, and give it an object as a parameter, that object will
+become <code>this</code> when the function is executed.</p>
+<p>Function objects have extra capabilities because they have another object
+in their prototype chain, before <code>Object.prototype</code>: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/prototype"><code>Function.prototype</code></a>.
+That&#39;s where methods like <code>call()</code>, <code>apply()</code> and <code>bind()</code> come from. It is also
+interesting to note that <code>Function.prototype</code> also has it&#39;s own <code>toString()</code>,
+different from <code>Object.prototype.toString()</code>. When accessing a property on an
+object, the closest one in the prototype chain will be used. This can lead to
+the situation we have with <code>toString()</code>, where one property <em>shadows</em> another.
+This is also known as <em>overriding</em>.</p>
+<pre><code class="language-js">function foo() {} // foo is a function object
+foo.x = 42 // functions are objects, so we can set props on them
+foo.addFive = function (n) { return n + 5 } // adding a function as a prop
+foo.toString() // =&gt; &#39;function foo(){}&#39;
+foo.toString === Function.prototype.toString // =&gt; true
+foo.toString === Object.prototype.toString // =&gt; false</code></pre>
+<p><img src="./fig-3.svg" alt="Function object"></p>
+<h2 id="creating-prototype-links-implicitly">Creating Prototype Links - Implicitly</h2>
+<h3 id="the-prototype-property">The &quot;prototype&quot; property</h3>
+<p>When a function object is created, JavaScript will add a property to it,
+&quot;prototype&quot;. This &quot;prototype&quot; is an object with a single (non-internal)
+property: &quot;constructor&quot; which is a reference back to the function. Objects
+created by the function with <code>new</code> will be prototype-linked to the object at
+the function&#39;s &quot;prototype&quot; property. So function objects have both
+<code>[[Prototype]]</code> and the &quot;prototype&quot; property; it is important to note that
+they are completely different objects.</p>
+<pre><code class="language-js">function foo() {} // foo is a function object
+typeof foo.prototype // =&gt; &quot;object&quot; (implicitly created by JavaScript)
+foo.prototype.x = 42 // linked objects will be able to access &#39;x&#39;
+foo.y = 100 // functions are objects, so we can set props on them; but &#39;y&#39; will not be inherited
+const bar = new foo() // bar is prototype-linked to foo.prototype
+bar.x // =&gt; 42 - &quot;inherited&quot; from foo.prototype
+bar.y // =&gt; undefined</code></pre>
+<h3 id="the-constructor-property">The <code>constructor</code> Property</h3>
+<p>We saw that when JS creates a function object, it also creates the prototype
+object. This object has a &quot;constructor&quot; property, and it is a reference to
+the function object. Because it&#39;s on the prototype, it will be inherited
+by objects created by the function with <code>new</code>:</p>
+<pre><code class="language-js">function foo() {}
+foo.prototype.constructor === foo // =&gt; true
+const obj = new foo()
+obj.constructor === foo // =&gt; true
+obj.hasOwnProperty(&#39;constructor&#39;) // =&gt; false - the &#39;constructor&#39; property is inherited</code></pre>
+<p>However, it&#39;s not safe to assume that if <code>obj.constructor === foo</code>, it means
+the object was created by <code>foo</code>. That&#39;s because the &quot;prototype&quot; property of
+function objects can be changed, so <code>prototype.constructor</code> can point to anything:</p>
+<pre><code class="language-js">function foo() {}
+function bar() {}
+foo.prototype = {
+  constructor: bar
+}
+const obj = new foo()
+obj.constructor === bar // =&gt; true - even though foo created obj</code></pre>
+<h3 id="constructor-functions">Constructor Functions</h3>
+<p>In JavaScript, <strong>any</strong> function becomes a constructor when called with <code>new</code>.
+As we saw previously, even a function like <code>function foo () {}</code> will still
+return a new object, prototype-linked to <code>foo.prototype</code>.</p>
+<p>Just before executing a constructor call, JavaScript will create a brand new
+object and it will set <code>this</code> to point to it for the duration of the
+constructor function&#39;s execution. It will also set the object&#39;s internal
+<code>[[Prototype]]</code> property to point to the function&#39;s <code>prototype</code>. At the end
+of the execution, the return value of the function is this newly created
+object; the class <em>instance</em>. JavaScript will automatically set it as the
+return value. Note that this happens only if a function is called with <code>new</code>:</p>
+<pre><code class="language-js">function Foo (initialCount) {
+  this.count = initialCount
+}
+Foo.prototype.incrementCount = function () {
+  this.count++
+}
+const o1 = new Foo(10) // o1: { count: 10 } 
+o1.incrementCount()
+o1.count // =&gt; 11
+const o2 = Foo(10) // o2: undefined; possible side-effect: window.count === 10
+const o3 = {} // an empty object
+Foo.call(o3, 10) // invoke Foo; it will run with o3 as `this`, will not create a new object
+o3 // { count: 10 }</code></pre>
+<p>When we call a function without <code>new</code>, it won&#39;t implicitly create and return
+a new object. So what will <code>this</code> point to, then ? Because <code>this</code> is bound at
+run-time, it really depends on how the function was called. If a function is
+not called as the prop of an object, and is not bound (with <code>bind</code> or with
+<code>call/apply</code>) then <code>this</code> will be the global object. For browsers, that&#39;s
+<code>window</code>; hence the unwanted side-effect in the example above. <a href="https://github.com/getify/You-Dont-Know-JS/blob/master/this%20%26%20object%20prototypes/ch2.md">More details
+on <code>this</code>.</a></p>
+<h2 id="implementing-inheritance-with-function-objects">Implementing Inheritance with Function Objects</h2>
+<p>We&#39;ve seen how the prototype chain can be used to enable objects to delegate
+functionality to other objects; JavaScript is a dynamic, prototype-based language.
+We can also use it as a class-based OO language; we&#39;ve already seen some of the
+hallmarks - using <code>new</code> to create new objects, the <code>constructor</code> property.</p>
+<p>But there are a few more things that happen in class-based languages. One such thing is calling the &quot;parent&quot;
+constructor; when the sub-class is instantiated, one would expect the
+super-class constructor to be called. Therefore, we need to make sure to call
+the parent function, which is also the super-class constructor:</p>
+<pre><code class="language-js">function Bar (initialCount) {
+  Foo.call(this, initialCount)
+}</code></pre>
+<p>We also need a way for <code>Bar</code> to inherit from <code>Foo</code>; this is done via the
+prototype chain:</p>
+<pre><code class="language-js">Bar.prototype = Object.create(Foo)</code></pre>
+<p>Why not just <code>Bar.prototype = Foo.prototype</code> ? Because then the &quot;prototype&quot;
+property of both function objects would reference the exact same object. If
+you add something to <code>Bar</code>&#39;s prototype, it would also be inherited by all
+<code>Foo</code> instances. This is not desirable because super classes should not
+inherit from their sub-classes.</p>
+<p>We could also try <code>Bar.prototype = new Foo()</code>; this would also make
+inheritance happen. However, this can have unwanted side-effects. Let&#39;s say
+we create a <code>Foo</code> instance when the user clicks a button, and we log that
+action in the <code>Foo</code> function. However, if we check the logs, we will see that
+we always get an entry without the user doing anything - it&#39;s because we run
+the <code>Foo</code> function to setup <code>Bar</code>&#39;s prototype.</p>
+<h2 id="shadowing">Shadowing</h2>
+<p>In most cases, creating a property on an object will succeed. But there are two situations in which that will not happen,
+at least not as expected. Both of them occur when JS finds an object in the
+target object&#39;s prototype chain which already has a property with the same
+name as the one we&#39;re trying to set/create on the target object.</p>
+<h3 id="situation-1-the-property-is-a-setter">Situation 1 - The Property is a <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/set">setter</a></h3>
+<p>In JS, if we want to run a function when setting a property, we can can use a
+setter. In this case, <strong>JS will call the setter</strong>. The setter function can
+use <code>this</code>, which will be a reference to the target object, <em>not</em> the linked
+object:</p>
+<pre><code class="language-js">const foo = {
+  set myProp(value) {
+    this.x = value + 1
+  }
+}
+const bar = Object.create(foo) // &#39;bar&#39; is the target object
+bar.myProp = 10 // the setter will be called; `this` will be `bar`
+bar.myProp // =&gt; undefined
+bar.x // =&gt; 11</code></pre>
+<h3 id="situation-2-the-property-is-read-only">Situation 2 - The Property is Read-only</h3>
+<p>We can create read-only properties using <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty">Object.defineProperty</a>:</p>
+<pre><code class="language-js">const foo = {}
+Object.defineProperty(foo, &#39;myProp&#39;, {
+  value: 42,
+  writable: false,
+})
+foo.myProp // =&gt; 42
+foo.myProp = 100 // ignored, or throws in &quot;strict&quot; mode
+foo.myProp // =&gt; 42</code></pre>
+<p>If <code>foo</code> is part of the prototype chain for <code>bar</code>, then we <strong>can&#39;t set a
+&quot;myProp&quot; property on <code>bar</code></strong>. In other words, a read-only prop somewhere down
+the line in the prototype chain will prevent assigning a property with that
+name on the target object. In <code>strict</code> mode, an exception will be thrown;
+otherwise the assignment will just silently fail.</p>
+<pre><code class="language-js">// continuing previous example
+const bar = Object.create(foo)
+bar.myProp = 100 // nothing happens !
+bar.myProp // =&gt; 42</code></pre>
+<p>This is to prevent <em>shadowing</em> - which is what happens when two
+prototype-linked objects have properties with the same name; when reading
+the value of that prop, the first one will be returned, thus &quot;shadowing&quot; the
+second one. I&#39;m not sure why this is done <em>just</em> for read-only properties,
+but that&#39;s how it is. Essentially, it means that if an object has a &#39;myProp&#39;
+property that is read-only, then it can&#39;t be <em>shadowed</em> by objects which will
+add this object to their prototype chain. But, if the property is writable,
+you&#39;re free to shadow it !</p>
+<pre><code class="language-js">const foo = {}
+Object.defineProperties(foo, {
+  &#39;myReadOnlyProp&#39;: { value: 42, writable: false },
+  &#39;myWritableProp&#39;: { value: 10, writable: true }
+})
+const bar = Object.create(foo)
+bar.myReadOnlyProp = 100 // can&#39;t shadow read-only props, nothing happens
+bar.myReadOnlyProp // =&gt; 42
+bar.myWritableProp = 100 // can shadow writable props; prop created on `bar`
+foo.myWritableProp // =&gt; 10; the shadowed property is unaffected
+bar.myWritableProp // =&gt; 100</code></pre>
+<h2 id="summary">Summary</h2>
+<p>JS automatically adds a &quot;prototype&quot; property to function objects. When we
+instantiate objects by calling the function as a constructor (with <code>new</code>),
+the created objects will have access to properties on the <code>prototype</code> object.
+One such property is the <code>constructor</code> property, added by JS and which
+normally points to the function. We can create prototype-linked objects
+directly, with <code>Object.create</code>.</p>
+<p>An object&#39;s <code>prototype</code> property is <strong>not</strong> the same as it&#39;s internal
+<code>[[Prototype]]</code> link; if the object is a function, then it&#39;s <code>prototype</code> will
+become the <code>[[Prototype]]</code> of objects created when that function is called as
+a constructor. We can use <code>__proto__</code> or <code>Object.getPrototypeOf</code> to get a
+reference to the object referenced by the internal <code>[[Prototype]]</code> slot, and
+we can use either <code>__proto__</code> or <code>Object.setPrototypeOf</code> to set it&#39;s value.</p>
+<p>Reading the value of a property that is not on the target object will
+traverse the prototype chain and return the first one found, or <code>undefined</code>,
+whereas the algorithm for setting such properties is more complex, calling
+the first found setter and preventing the shadowing of read-only properties.</p>
