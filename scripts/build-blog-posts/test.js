@@ -4,7 +4,7 @@ const assert = require('assert')
 const computeDiff = require('diff')
 const colors = require('colors')
 
-const { markdownToPreactComponent } = require('./index')
+const { markdownToPreactComponent, markdownFoldersToComponents } = require('./index')
 
 const testMarkdown = `
 <small>Author: <a href="www.john.com">John</a></small>
@@ -38,20 +38,23 @@ if (diff.length) {
     const { added, removed, value} = part
     if (added) color = 'green'
     if (removed) color = 'red'
-    process.stderr.write(value[color])
+    if (added || removed) {
+      process.stderr.write(value[color])
+    }
   })
 }
 assert(result === expectedJs)
 
-// mockFs({
-//   'posts': {
-//     'p1': {
-//       'index.md': `# Title
-//       Some _markdown_ **text**
-//       `
-//     }
-//   }
-// })
-// assert(fs.existsSync('./build/p1/index.js'))
-// assert(fs.readFileSync('./build/p1/index.js') === expectedJs)
-// mockFs.restore()
+mockFs({
+  'posts': {
+    'p1': {
+      'index.md': testMarkdown,
+      'fig-1.svg': '<svg />'
+    }
+  }
+})
+markdownFoldersToComponents('./posts')
+assert(fs.existsSync('./build/p1/index.js'))
+assert(fs.existsSync('./build/p1/fig-1.svg'))
+assert(fs.readFileSync('./build/p1/index.js') === expectedJs)
+mockFs.restore()

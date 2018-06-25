@@ -1,11 +1,9 @@
-import { readFileSync } from 'fs'
+import fs from 'fs'
 import marked from 'marked'
 import path from 'path'
 import ent from 'ent'
 import tidy from 'tidy-html5'
 import cheerio from 'cheerio'
-
-// console.log(tidy)
 
 const defaultStartBlock = `import { h } from 'preact'
 export default function Post () {
@@ -28,6 +26,8 @@ const markdownToPreactComponent = (markdown, {
     'indent-spaces': 2,
     'wrap': 0,
     'show-info': false,
+    'show-warnings': false,
+    'error-file': '/dev/null',
   })
   const bodyHtml = cheerio.load(tidiedHtml)('body').html().trim()
   return `${startBlock}
@@ -41,12 +41,41 @@ const markdownFileToComponentFile = (markdownFile, {
   outputFolder = './build',
   routes = './routes.json',
 }) => {
-  const markdown = readFileSync(htmlFile)
+  const markdown = fs.readFileSync(markdownFile, 'utf-8')
   const component = markdownToPreactComponent(markdown)
-  fs.writeFileSync(path.join(outputFolder, slug, `index.js`))
+  fs.mkdirSync(path.join(outputFolder, slug))
+  const outputPath = path.join(outputFolder, slug, `index.js`) 
+  console.log('writing: ', outputPath)
+  fs.writeFileSync(outputPath, markdownToPreactComponent(markdown))
+}
+
+const markdownFoldersToComponents = (folder, outputFolder = './build', routesFile = './routes.json') => {
+  if (!fs.existsSync(outputFolder)) {
+    fs.mkdirSync(outputFolder)
+  }
+  fs.readdirSync(folder).forEach(file => {
+    const filePath = path.join(folder, file)
+    const stat = fs.statSync(filePath)
+    if (stat.isDirectory()) {
+      fs.readdirSync(filePath).forEach(nestedFile => {
+        const nestedFilePath = path.join(filePath, nestedFile)
+        const slug = path.basename(filePath)
+        if (path.extname(nestedFile) === '.md') {
+          markdownFileToComponentFile(nestedFilePath, {
+            slug,
+            outputFolder,
+            routes: routesFile,
+          })
+        } else {
+          fs.promises.copyFile(nestedFilePath, path.join(outputFolder, slug))
+        }
+      })
+    }
+  })
 }
 
 export {
   markdownToPreactComponent,
   markdownFileToComponentFile,
+  markdownFoldersToComponents,
 }
