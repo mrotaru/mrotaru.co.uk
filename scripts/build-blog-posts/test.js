@@ -1,17 +1,24 @@
 const fs = require('fs')
 const mockFs = require('mock-fs')
 const assert = require('assert')
+const computeDiff = require('diff')
+const colors = require('colors')
 
-const { htmlToPreactComponent } = require('./index')
+const { markdownToPreactComponent } = require('./index')
 
-const testMarkdown = `# Title
+const testMarkdown = `
+<small>Author: <a href="www.john.com">John</a></small>
+<small>Date: 2018-06-16</small>
+# Title
 Some _markdown_ **text**
 `
 const expectedJs = `import { h } from 'preact'
 export default function Post () {
   return (
     <div>
-    <small>2018-06-16</small> <small>Author: <a href="www.john.com">John</a></small>
+    <p>
+      <small>Author: <a href="www.john.com">John</a></small> <small>Date: 2018-06-16</small>
+    </p>
     <h1 id="title">
       Title
     </h1>
@@ -22,14 +29,18 @@ export default function Post () {
   )
 }`
 
-const result = htmlToPreactComponent(testMarkdown, {
-  publishedDate: '2018-06-16',
-  author: {
-    name: 'John',
-    url: 'www.john.com',
-  }
-})
+const result = markdownToPreactComponent(testMarkdown)
 
+const diff = computeDiff.diffLines(result, expectedJs)
+if (diff.length) {
+  diff.forEach(part => {
+    let color = 'grey'
+    const { added, removed, value} = part
+    if (added) color = 'green'
+    if (removed) color = 'red'
+    process.stderr.write(value[color])
+  })
+}
 assert(result === expectedJs)
 
 // mockFs({

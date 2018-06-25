@@ -13,17 +13,12 @@ export default function Post () {
 const defaultEndBlock = `
   )
 }`
-const htmlToPreactComponent = (markdown, {
-  publishedDate, author,
+const markdownToPreactComponent = (markdown, {
   startBlock = defaultStartBlock,
   endBlock = defaultEndBlock,
-}) => {
+} = {}) => {
   const htmlFromMarkdown = ent.decode(marked(markdown))
-  const authorHtml = author && `<small>Author: <a href="${author.url}">${author.name}</a></small>`
-  const publishedDateHtml = publishedDate && `<small>${publishedDate}</small>`
   const combinedHtml = `
-      ${publishedDate && publishedDateHtml}
-      ${author && authorHtml}
       ${htmlFromMarkdown}`
   const tidiedHtml = tidy.tidy_html5(combinedHtml, {
     'indent': 'yes',
@@ -41,19 +36,17 @@ const htmlToPreactComponent = (markdown, {
     </div>${endBlock}`
 }
 
-const htmlFileToComponentFile = (htmlFile, {
+const markdownFileToComponentFile = (markdownFile, {
   slug,
   outputFolder = './build',
   routes = './routes.json',
-  getPublishedDate = () => '2018-06-16',
-  getAuthor = () => 'John',
 }) => {
-  const html = readFileSync(htmlFile)
-  const component = htmlToPreactComponent(html)
-  fs.writeFileSync(path.join(outputFolder, `${slug}.js`))
+  const markdown = readFileSync(htmlFile)
+  const component = markdownToPreactComponent(markdown)
+  fs.writeFileSync(path.join(outputFolder, slug, `index.js`))
 }
 
 export {
-  htmlToPreactComponent,
-  htmlFileToComponentFile,
+  markdownToPreactComponent,
+  markdownFileToComponentFile,
 }
