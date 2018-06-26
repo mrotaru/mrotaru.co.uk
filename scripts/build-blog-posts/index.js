@@ -1,9 +1,11 @@
 import fs from 'fs'
 import marked from 'marked'
+import { normalize, join, resolve } from 'path'
 import path from 'path'
 import ent from 'ent'
 import tidy from 'tidy-html5'
 import cheerio from 'cheerio'
+import assert from 'assert'
 
 const defaultStartBlock = `import { h } from 'preact'
 export default function Post () {
@@ -37,42 +39,66 @@ const markdownToPreactComponent = (markdown, {
 }
 
 const markdownFileToComponentFile = (markdownFile, {
-  slug,
-  outputFolder = './build',
+  outputFolder,
   routes = './routes.json',
 }) => {
   const markdown = fs.readFileSync(markdownFile, 'utf-8')
   const component = markdownToPreactComponent(markdown)
-  fs.mkdirSync(path.join(outputFolder, slug))
-  const outputPath = path.join(outputFolder, slug, `index.js`) 
+  const outputPath = resolve(join(outputFolder, `index.js`))
   console.log('writing: ', outputPath)
   fs.writeFileSync(outputPath, markdownToPreactComponent(markdown))
 }
 
-const markdownFoldersToComponents = (folder, outputFolder = './build', routesFile = './routes.json') => {
-  if (!fs.existsSync(outputFolder)) {
-    fs.mkdirSync(outputFolder)
-  }
-  fs.readdirSync(folder).forEach(file => {
-    const filePath = path.join(folder, file)
-    const stat = fs.statSync(filePath)
-    if (stat.isDirectory()) {
-      fs.readdirSync(filePath).forEach(nestedFile => {
-        const nestedFilePath = path.join(filePath, nestedFile)
-        const slug = path.basename(filePath)
-        if (path.extname(nestedFile) === '.md') {
-          markdownFileToComponentFile(nestedFilePath, {
-            slug,
-            outputFolder,
-            routes: routesFile,
-          })
-        } else {
-          fs.promises.copyFile(nestedFilePath, path.join(outputFolder, slug))
-        }
+const processFolderWithMarkdownFiles = (absoluteFolder, absoluteOutputFolder, routesFile) => {
+  fs.mkdirSync(absoluteOutputFolder)
+  fs.readdirSync(absoluteFolder).forEach(async nestedFile => {
+    const nestedFilePath = join(absoluteFolder, nestedFile)
+    if (path.extname(nestedFile) === '.md') {
+      markdownFileToComponentFile(nestedFilePath, {
+        outputFolder: absoluteOutputFolder,
+        routes: routesFile,
       })
+    } else {
+      const dest = join(absoluteOutputFolder, nestedFile)
+      console.log(`${nestedFilePath} -> ${dest}`)
+      await copyFile(nestedFilePath, dest)
     }
   })
 }
+
+const markdownFoldersToComponents = (folder, outputFolder = './build', routesFile = './routes.json') => {
+  const absoluteOutputFolder = resolve(outputFolder)
+  if (!fs.existsSync(absoluteOutputFolder)) {
+    fs.mkdirSync(absoluteOutputFolder)
+  }
+  fs.readdirSync(folder).forEach(file => {
+    const filePath = resolve(join(folder, file))
+    const stat = fs.statSync(filePath)
+    const slug = path.basename(filePath)
+    if (stat.isDirectory()) {
+      const destFolder = join(absoluteOutputFolder, slug)
+      processFolderWithMarkdownFiles(filePath, destFolder, routesFile)
+    }
+  })
+}
+
+async function copyFile(source, target) {
+  var rd = fs.createReadStream(source);
+  var wr = fs.createWriteStream(target);
+  try {
+    return await new Promise(function(resolve, reject) {
+      rd.on('error', reject);
+      wr.on('error', reject);
+      wr.on('finish', resolve);
+      rd.pipe(wr);
+    });
+  } catch (error) {
+    rd.destroy();
+    wr.end();
+    throw error;
+  }
+}
+
 
 export {
   markdownToPreactComponent,
