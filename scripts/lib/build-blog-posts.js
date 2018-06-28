@@ -12,12 +12,24 @@ export default function Post () {
 const defaultEndBlock = `
   )
 }`
+
+const markdownToHtml = (markdown, {
+  markedOptions = {},
+  decodeHtmlEntities = true,
+}) => {
+  marked.setOptions({ xhtml: true, ...markedOptions })
+  let htmlFromMarkdown = marked(markdown)
+  return decodeHtmlEntities
+    ? ent.decode(htmlFromMarkdown)
+    : htmlFromMarkdown
+}
+
 const markdownToPreactComponent = (markdown, {
   startBlock = defaultStartBlock,
   endBlock = defaultEndBlock,
+  markedOptions = {}
 } = {}) => {
-  marked.setOptions({ xhtml: true })
-  const htmlFromMarkdown = ent.decode(marked(markdown))
+  const htmlFromMarkdown = markdownToHtml(markdown)
   const combinedHtml = `
       ${htmlFromMarkdown}`
   const tidiedHtml = tidy.tidy_html5(combinedHtml, {
