@@ -16,7 +16,7 @@ const defaultEndBlock = `
 const markdownToHtml = (markdown, {
   markedOptions = {},
   decodeHtmlEntities = true,
-}) => {
+} = {}) => {
   marked.setOptions({ xhtml: true, ...markedOptions })
   let htmlFromMarkdown = marked(markdown)
   return decodeHtmlEntities
@@ -67,10 +67,14 @@ const processFolderWithMarkdownFiles = (absoluteFolder, absoluteOutputFolder, ro
   fs.readdirSync(absoluteFolder).forEach(async nestedFile => {
     const nestedFilePath = join(absoluteFolder, nestedFile)
     if (extname(nestedFile) === '.md') {
-      markdownFileToComponentFile(nestedFilePath, {
-        outputFolder: absoluteOutputFolder,
-        routes: routesFile,
-      })
+      fs.writeFileSync(join(absoluteOutputFolder, 'data.html'), markdownToHtml(markdown))
+      fs.writeFileSync(join(absoluteOutputFolder, 'index.js'), `
+      import { h } from 'preact'
+      import html from './data.html'
+      export default function () {
+        return <div dangerouslySetInnerHtml={{__html: html}} />
+      }
+      `)
     } else {
       const dest = join(absoluteOutputFolder, nestedFile)
       console.log(`${nestedFilePath} -> ${dest}`)
