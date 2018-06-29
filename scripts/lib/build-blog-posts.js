@@ -5,6 +5,7 @@ import ent from 'ent'
 import tidy from 'tidy-html5'
 import cheerio from 'cheerio'
 import assert from 'assert'
+import rimraf from 'rimraf'
 
 const defaultStartBlock = `import { h } from 'preact'
 export default function Post () {
@@ -17,7 +18,7 @@ const markdownToHtml = (markdown, {
   markedOptions = {},
   decodeHtmlEntities = true,
 } = {}) => {
-  marked.setOptions({ xhtml: true, ...markedOptions })
+  marked.setOptions(Object.assign({ xhtml: true }, ...markedOptions ))
   let htmlFromMarkdown = marked(markdown)
   return decodeHtmlEntities
     ? ent.decode(htmlFromMarkdown)
@@ -62,19 +63,22 @@ const markdownFileToComponentFile = (markdownFile, {
   fs.writeFileSync(outputPath, markdownToPreactComponent(markdown))
 }
 
+const indexJsTemplate =
+`import { h } from 'preact'
+import html from './data.html'
+export default function () {
+  return <div dangerouslySetInnerHtml={{__html: html}} />
+}
+`
+
 const processFolderWithMarkdownFiles = (absoluteFolder, absoluteOutputFolder, routesFile) => {
   fs.mkdirSync(absoluteOutputFolder)
   fs.readdirSync(absoluteFolder).forEach(async nestedFile => {
     const nestedFilePath = join(absoluteFolder, nestedFile)
     if (extname(nestedFile) === '.md') {
-      fs.writeFileSync(join(absoluteOutputFolder, 'data.html'), markdownToHtml(markdown))
-      fs.writeFileSync(join(absoluteOutputFolder, 'index.js'), `
-      import { h } from 'preact'
-      import html from './data.html'
-      export default function () {
-        return <div dangerouslySetInnerHtml={{__html: html}} />
-      }
-      `)
+      const html = markdownToHtml(fs.readFileSync(nestedFilePath, 'utf-8'))
+      fs.writeFileSync(join(absoluteOutputFolder, 'data.html'), html)
+      fs.writeFileSync(join(absoluteOutputFolder, 'index.js'), indexJsTemplate)
     } else {
       const dest = join(absoluteOutputFolder, nestedFile)
       console.log(`${nestedFilePath} -> ${dest}`)
@@ -88,6 +92,9 @@ const markdownFoldersToComponents = (sourceFolder, outputFolder = './build', rou
   const folder = resolve(sourceFolder)
   assert(fs.existsSync(folder), `No such folder: ${folder}`)
   const absoluteOutputFolder = resolve(outputFolder)
+  if (fs.existsSync(absoluteOutputFolder)) {
+    rimraf.sync(absoluteOutputFolder)
+  }
   if (!fs.existsSync(absoluteOutputFolder)) {
     fs.mkdirSync(absoluteOutputFolder)
   }
@@ -95,7 +102,7 @@ const markdownFoldersToComponents = (sourceFolder, outputFolder = './build', rou
     const filePath = join(folder, file)
     const stat = fs.statSync(filePath)
     const slug = basename(filePath)
-    if (stat.isDirectory()) {
+    if (stat.isDirectory() && basename(filePath) !== '.git') {
       const destFolder = join(absoluteOutputFolder, slug)
       processFolderWithMarkdownFiles(filePath, destFolder, routesFile)
     }
