@@ -105,7 +105,7 @@ const markdownFoldersToComponents = (sourceFolder, outputFolder = './build', rou
     const stat = fs.statSync(filePath)
     const slug = basename(filePath)
     renderer.image = (href, title, text) => {
-      return `<img src="/blog/${join(slug, href)}" alt="${title}" />`
+      return `<img src="/blog/${join(slug, href)}" alt="${text}" />`
     }
     if (stat.isDirectory() && basename(filePath) !== '.git') {
       const destFolder = join(absoluteOutputFolder, slug)
