@@ -14,12 +14,14 @@ const defaultEndBlock = `
   )
 }`
 
+const renderer = new marked.Renderer()
+
 const markdownToHtml = (markdown, {
   markedOptions = {},
   decodeHtmlEntities = true,
 } = {}) => {
   marked.setOptions(Object.assign({ xhtml: true }, ...markedOptions ))
-  let htmlFromMarkdown = marked(markdown)
+  let htmlFromMarkdown = marked(markdown, { renderer })
   return decodeHtmlEntities
     ? ent.decode(htmlFromMarkdown)
     : htmlFromMarkdown
@@ -30,7 +32,7 @@ const markdownToPreactComponent = (markdown, {
   endBlock = defaultEndBlock,
   markedOptions = {}
 } = {}) => {
-  const htmlFromMarkdown = markdownToHtml(markdown)
+  const htmlFromMarkdown = markdownToHtml(markdown, { markedOptions })
   const combinedHtml = `
       ${htmlFromMarkdown}`
   const tidiedHtml = tidy.tidy_html5(combinedHtml, {
@@ -71,12 +73,12 @@ export default function () {
 }
 `
 
-const processFolderWithMarkdownFiles = (absoluteFolder, absoluteOutputFolder, routesFile) => {
+const processFolderWithMarkdownFiles = ({ absoluteFolder, absoluteOutputFolder, slug, routesFile }) => {
   fs.mkdirSync(absoluteOutputFolder)
   fs.readdirSync(absoluteFolder).forEach(async nestedFile => {
     const nestedFilePath = join(absoluteFolder, nestedFile)
     if (extname(nestedFile) === '.md') {
-      const html = markdownToHtml(fs.readFileSync(nestedFilePath, 'utf-8'))
+      const html = markdownToHtml(fs.readFileSync(nestedFilePath, 'utf-8'), { markedOptions: { baseUrl: slug }})
       fs.writeFileSync(join(absoluteOutputFolder, 'data.html'), html)
       fs.writeFileSync(join(absoluteOutputFolder, 'index.js'), indexJsTemplate)
     } else {
@@ -102,9 +104,17 @@ const markdownFoldersToComponents = (sourceFolder, outputFolder = './build', rou
     const filePath = join(folder, file)
     const stat = fs.statSync(filePath)
     const slug = basename(filePath)
+    renderer.image = (href, title, text) => {
+      return `<img src="/blog/${join(slug, href)}" alt="${title}" />`
+    }
     if (stat.isDirectory() && basename(filePath) !== '.git') {
       const destFolder = join(absoluteOutputFolder, slug)
-      processFolderWithMarkdownFiles(filePath, destFolder, routesFile)
+      processFolderWithMarkdownFiles({
+        absoluteFolder: filePath,
+        absoluteOutputFolder: destFolder,
+        routesFile,
+        slug
+      })
     }
   })
 }
