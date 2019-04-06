@@ -1,22 +1,14 @@
 # mrotaru.co.uk
 
-## CLI Commands
+WIP:
+- use plain html/js/css - the website is simple and no frameworks are needed
+- remove Jest - it's way too complex; use someting like `tape`
+- `lite-server` for automatic refresh
 
-``` bash
-# install dependencies
-npm install
-
-# serve with hot reload at localhost:8080
-npm run dev
-
-# build for production with minification
-npm run build
-
-# test the production build locally
-npm run serve
-
-# run tests with jest and preact-render-spy 
-npm run test
-```
-
-For detailed explanation on how things work, checkout the [CLI Readme](https://github.com/developit/preact-cli/blob/master/README.md).
+## Blog Posts, Pages
+- content in a different, private repo to avoid lost SEO value
+- folder per page/blog post: content.markdown, images, meta.json (title, url, keywords)
+- generate content.html as part of content build/deploy
+- content deployed separately
+- use pushState, service worker to fetch content dynamically on click
+- generate a complete page, to ensure it works without JS or SW support
