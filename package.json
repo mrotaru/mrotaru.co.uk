@@ -19,13 +19,9 @@
     "build/*"
   ],
   "devDependencies": {
-    "babel-preset-es2015": "^6.24.1",
     "cheerio": "^1.0.0-rc.2",
-    "colors": "^1.3.3",
-    "diff": "^3.5.0",
     "ent": "^2.2.0",
-    "identity-obj-proxy": "^3.0.0",
-    "if-env": "^1.0.0",
+    "handlebars": "^4.1.1",
     "marked": "^0.4.0",
     "mock-fs": "^4.8.0",
     "rimraf": "^2.6.3",
