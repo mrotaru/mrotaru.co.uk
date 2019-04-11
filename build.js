@@ -6,7 +6,7 @@ const ent = require("ent");
 const tidy = require("tidy-html5");
 const { normalize, join, resolve, extname, basename } = require("path");
 const url = require("url");
-const ncp = utils.promisify(require('ncp').ncp)
+const ncp = utils.promisify(require("ncp").ncp);
 const rimraf = utils.promisify(require("rimraf"));
 
 const baseUrl = process.env.BASE_URL || "http://localhost:8080";
@@ -25,9 +25,13 @@ const tidyOptions = {
 };
 
 const compileTemplates = async () => ({
-  "page": handlebars.compile(await fs.readFile("./template-page.html", { encoding: "utf8" })),
-  "blog-post": handlebars.compile(await fs.readFile("./template-blog-post.html", { encoding: "utf8" })),
-})
+  page: handlebars.compile(
+    await fs.readFile("./template-page.html", { encoding: "utf8" })
+  ),
+  "blog-post": handlebars.compile(
+    await fs.readFile("./template-blog-post.html", { encoding: "utf8" })
+  )
+});
 
 const markdownToHtml = (markdownText, { markedOptions = {} } = {}) => {
   marked.setOptions(Object.assign({ xhtml: true }, markedOptions));
@@ -43,9 +47,9 @@ const estat = async path => {
     return await fs.lstat(path);
   } catch (err) {
     if (err.code === "ENOENT") {
-      return null
+      return null;
     } else {
-      throw err
+      throw err;
     }
   }
 };
@@ -56,7 +60,7 @@ const buildDir = async ({
   parent = "",
   removeIfExisting = true,
   createDestination = true,
-  templates,
+  templates
 }) => {
   console.log(`buid: ${source} 🠆 ${destination} ...`);
   const entries = await fs.readdir(source);
@@ -86,21 +90,23 @@ const buildDir = async ({
         parent: join(parent, entry),
         removeIfExisting: false,
         createDestination: false,
-        templates,
+        templates
       });
     } else {
       await buildDir({
         source: joinedSource,
         destination: joinedDestination,
         parent: join(parent, entry),
-        templates,
+        templates
       });
     }
   }
-  let meta = {}
+  let meta = {};
   if (files.includes("meta.json")) {
-    const json = await fs.readFile(join(source, "meta.json"), { encoding: "utf8" });
-    meta = JSON.parse(json)
+    const json = await fs.readFile(join(source, "meta.json"), {
+      encoding: "utf8"
+    });
+    meta = JSON.parse(json);
   }
   for (const entry of files.filter(file => file !== "meta.json")) {
     const joined = join(source, entry);
@@ -108,10 +114,10 @@ const buildDir = async ({
     if (ext === ".md") {
       const parentBaseUrl = url.resolve(baseUrl, parent);
       const markdown = await fs.readFile(joined, { encoding: "utf8" });
-      const markedOptions = { baseUrl: `${parentBaseUrl}/` }
+      const markedOptions = { baseUrl: `${parentBaseUrl}/` };
       const html = templates[meta.template]({
         content: markdownToHtml(markdown, { markedOptions }),
-        ...meta,
+        ...meta
       });
       await fs.writeFile(
         join(destination, `${basename(entry, ".md")}.html`),
@@ -125,17 +131,20 @@ const buildDir = async ({
 };
 
 const build = async ({ source, destination }) => {
-  const templates = await compileTemplates()
+  const templates = await compileTemplates();
   const stat = await estat(destination);
   if (stat) {
     if (stat.isDirectory()) {
       await rimraf(destination);
     }
   }
-  await (ncp('./static', destination))
-  await buildDir({ source, destination, templates, removeIfExisting: false }).catch(err =>
-    console.log(`build dir ${source} failed:`, err)
-  );
+  await ncp("./static", destination);
+  await buildDir({
+    source,
+    destination,
+    templates,
+    removeIfExisting: false
+  }).catch(err => console.log(`build dir ${source} failed:`, err));
 };
 
 build({ source: "./content", destination: "./build" })
