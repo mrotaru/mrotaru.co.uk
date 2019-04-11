@@ -1,3 +1,4 @@
+const utils = require("util");
 const fs = require("fs").promises;
 const marked = require("marked");
 const handlebars = require("handlebars");
@@ -5,7 +6,7 @@ const ent = require("ent");
 const tidy = require("tidy-html5");
 const { normalize, join, resolve, extname, basename } = require("path");
 const url = require("url");
-const utils = require("util");
+const ncp = utils.promisify(require('ncp').ncp)
 const rimraf = utils.promisify(require("rimraf"));
 
 const baseUrl = process.env.BASE_URL || "http://localhost:8080";
@@ -41,7 +42,11 @@ const estat = async path => {
   try {
     return await fs.lstat(path);
   } catch (err) {
-    return err.code === "ENOENT" ? null : err;
+    if (err.code === "ENOENT") {
+      return null
+    } else {
+      throw err
+    }
   }
 };
 
@@ -61,7 +66,7 @@ const buildDir = async ({
       await rimraf(destination);
     }
   }
-  if (createDestination) {
+  if (!stat && createDestination) {
     await fs.mkdir(destination);
   }
   const dirs = [];
@@ -121,8 +126,14 @@ const buildDir = async ({
 
 const build = async ({ source, destination }) => {
   const templates = await compileTemplates()
-  console.log(templates)
-  await buildDir({ source, destination, templates }).catch(err =>
+  const stat = await estat(destination);
+  if (stat) {
+    if (stat.isDirectory()) {
+      await rimraf(destination);
+    }
+  }
+  await (ncp('./static', destination))
+  await buildDir({ source, destination, templates, removeIfExisting: false }).catch(err =>
     console.log(`build dir ${source} failed:`, err)
   );
 };
