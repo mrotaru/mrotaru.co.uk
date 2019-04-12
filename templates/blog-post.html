@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+	{{> head meta=meta}}
+	<body>
+      <header>
+      <h1>{{meta.title}}</h1>
+      {{#if meta.subTitle}}<h3>{{meta.subTitle}}</h3>{{/if}}
+      </header>
+      <section id="content">
+        {{{content}}}
+			</section>
+			{{> footer meta=meta}}
+	</body>
+</html>

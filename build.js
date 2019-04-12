@@ -9,6 +9,7 @@ const url = require("url");
 const ncp = utils.promisify(require("ncp").ncp);
 const rimraf = utils.promisify(require("rimraf"));
 
+const readFile = async (path, options) => await fs.readFile(path, { encoding: "utf8", ...options })
 const baseUrl = process.env.BASE_URL || "http://localhost:8080";
 const tidyOptions = {
   "doctype": "omit",
@@ -24,14 +25,15 @@ const tidyOptions = {
   "wrap": 120
 };
 
-const compileTemplates = async () => ({
-  page: handlebars.compile(
-    await fs.readFile("./template-page.html", { encoding: "utf8" })
-  ),
-  "blog-post": handlebars.compile(
-    await fs.readFile("./template-blog-post.html", { encoding: "utf8" })
-  )
-});
+const compileTemplates = async () => {
+  handlebars.registerPartial('head', await readFile('./templates/_head.html'))
+  handlebars.registerPartial('footer', await readFile('./templates/_footer.html'))
+  const r1= await fs.readFile("./templates/page.html")
+  return {
+    "page": handlebars.compile(await readFile("./templates/page.html")),
+    "blog-post": handlebars.compile(await readFile("./templates/blog-post.html")),
+  }
+};
 
 const markdownToHtml = (markdownText, { markedOptions = {} } = {}) => {
   marked.setOptions(Object.assign({ xhtml: true }, markedOptions));
@@ -103,9 +105,7 @@ const buildDir = async ({
   }
   let meta = {};
   if (files.includes("meta.json")) {
-    const json = await fs.readFile(join(source, "meta.json"), {
-      encoding: "utf8"
-    });
+    const json = await readFile(join(source, "meta.json"))
     meta = JSON.parse(json);
   }
   for (const entry of files.filter(file => file !== "meta.json")) {
@@ -113,11 +113,11 @@ const buildDir = async ({
     const ext = extname(entry);
     if (ext === ".md") {
       const parentBaseUrl = url.resolve(baseUrl, parent);
-      const markdown = await fs.readFile(joined, { encoding: "utf8" });
+      const markdown = await readFile(joined);
       const markedOptions = { baseUrl: `${parentBaseUrl}/` };
       const html = templates[meta.template]({
         content: markdownToHtml(markdown, { markedOptions }),
-        ...meta
+        meta,
       });
       await fs.writeFile(
         join(destination, `${basename(entry, ".md")}.html`),
