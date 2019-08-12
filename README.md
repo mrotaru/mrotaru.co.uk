@@ -1,7 +1,7 @@
 # mrotaru.co.uk
 
 - this repo contains only code for building a static website, no actual content
-- content folder is hardcoded as `../mrotaru.co.uk-data`
+- path to folder with content folder is hardcoded as `./content`
 
 ## Build System
 

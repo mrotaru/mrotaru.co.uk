@@ -44,9 +44,8 @@ const buildDir = async ({
     stat.isFile() && files.push(entry);
   }
 
-  indexedMetas = [];
-  for (const entry of dirs.filter(dir => dir !== "index")) {
-    const indexedDir = join(source, entry);
+  for (const dir of dirs.filter(dir => dir !== "index")) {
+    const indexedDir = join(source, dir);
     const meta = await readJson(join(indexedDir, "meta.json"));
     const path = indexedDir.split(sep).slice(1).join(sep);
     indexedMetas.push({ ...meta, path, url: url.resolve(baseUrl, path) });
@@ -58,14 +57,14 @@ const buildDir = async ({
     meta = { ...JSON.parse(json), index: indexedMetas };
   }
 
-  for (const entry of dirs) {
-    const joinedSource = join(source, entry);
-    const joinedDestination = join(destination, entry);
-    if (entry === "index") {
+  for (const dirName of dirs) {
+    const joinedSource = join(source, dirName);
+    const joinedDestination = join(destination, dirName);
+    if (dirName === "index") {
       await buildDir({
         source: joinedSource,
         destination,
-        parent: join(parent, entry),
+        parent: join(parent, dirName),
         removeIfExisting: false,
         createDestination: false,
         templates
@@ -74,15 +73,15 @@ const buildDir = async ({
       await buildDir({
         source: joinedSource,
         destination: joinedDestination,
-        parent: join(parent, entry),
+        parent: join(parent, dirName),
         templates
       });
     }
   }
 
-  for (const entry of files.filter(file => file !== "meta.json")) {
-    const joined = join(source, entry);
-    const ext = extname(entry);
+  for (const fileName of files.filter(file => file !== "meta.json")) {
+    const joined = join(source, fileName);
+    const ext = extname(fileName);
     if (ext === ".md") {
       const parentBaseUrl = url.resolve(baseUrl, parent);
       const markdown = await readFile(joined);
@@ -93,12 +92,12 @@ const buildDir = async ({
         meta
       });
       await fs.writeFile(
-        join(destination, `${basename(entry, ".md")}.html`),
+        join(destination, `${basename(fileName, ".md")}.html`),
         html,
         { encoding: "utf8" }
       );
     } else {
-      await fs.copyFile(joined, join(destination, entry));
+      await fs.copyFile(joined, join(destination, fileName));
     }
   }
 };
