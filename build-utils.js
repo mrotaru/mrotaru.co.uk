@@ -29,11 +29,7 @@ const readJson = async file => {
 
 const compileTemplates = async () => {
   handlebars.registerPartial("head", await readFile("./templates/_head.html"));
-  handlebars.registerPartial(
-    "footer",
-    await readFile("./templates/_footer.html")
-  );
-  const r1 = await fs.readFile("./templates/page.html");
+  handlebars.registerPartial("footer", await readFile("./templates/_footer.html"));
   return {
     "page": handlebars.compile(await readFile("./templates/page.html")),
     "blog-post": handlebars.compile(await readFile("./templates/blog-post.html")),
