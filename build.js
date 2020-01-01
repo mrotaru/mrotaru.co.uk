@@ -24,6 +24,9 @@ const buildDir = async ({
   createDestination = true,
   templates
 }) => {
+  if (basename(source) === '.git') {
+    return;
+  }
   console.log(`buid: ${source} 🠆 ${destination} ...`);
   const entries = await fs.readdir(source);
   const stat = await estat(destination);
@@ -86,7 +89,7 @@ const buildDir = async ({
       const parentBaseUrl = url.resolve(baseUrl, parent);
       const markdown = await readFile(joined);
       const markedOptions = { baseUrl: `${parentBaseUrl}/` };
-      assert(templates.hasOwnProperty(meta.template), `No such template: ${meta.template}`);
+      assert(templates.hasOwnProperty(meta.template), `No such template: ${meta.template} (${source}${sep}${fileName})`);
       const html = templates[meta.template]({
         content: markdownToHtml(markdown, { markedOptions }),
         meta
@@ -119,6 +122,9 @@ const build = async ({ source, destination }) => {
   }).catch(err => console.log(`build dir ${source} failed:`, err));
 };
 
-build({ source: "./content", destination: "./build" })
+const destination = "./build"
+
+build({ source: "./content", destination })
+  .then(() => fs.copyFile('./node_modules/highlight.js/styles/default.css', join(destination, 'code-style.css')))
   .then(() => console.log("done."))
   .catch(err => console.log("build error:", err));

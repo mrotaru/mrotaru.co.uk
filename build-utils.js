@@ -3,6 +3,7 @@ const marked = require("marked");
 const handlebars = require("handlebars");
 const ent = require("ent");
 const tidy = require("tidy-html5");
+const hljs = require('highlight.js');
 
 const estat = async path => {
   try {
@@ -53,7 +54,19 @@ const markdownToHtml = (markdownText, { markedOptions = {} } = {}) => {
   };
   marked.setOptions(Object.assign({ xhtml: true }, markedOptions));
   const renderer = new marked.Renderer();
-  const htmlFromMarkdown = marked(markdownText, { renderer });
+  renderer.image = function (href, title, text) {
+    const escapedText = text.toLowerCase().replace(/[^\w]+/g, '-');
+    return `<img
+    src="${this.options.baseUrl}${href}"
+    alt="${text}"
+    title="${text}"
+    id="${escapedText}"
+   />`
+  };
+  const htmlFromMarkdown = marked(markdownText, {
+    renderer,
+    highlight: code => hljs.highlightAuto(code).value,
+  });
   const withDecodeHtmlEntities = ent.decode(htmlFromMarkdown);
   const tidiedHtml = tidy.tidy_html5(withDecodeHtmlEntities, tidyOptions);
   return tidiedHtml;

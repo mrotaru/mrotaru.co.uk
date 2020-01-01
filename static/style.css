@@ -1,18 +1,47 @@
-html, body {
-	background: #FAFAFA;
-	font-family: 'Slabo 27px', serif;
-	font-size: 1.2em;
-	padding: 1em;
-	padding-top: 0;
-	color: #444;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
+html,
+body {
+  background: oldlace;
+  font-family: "Palatino Linotype", "Delicious", "Cardo", serif;
+  /* font-family: "Delicious", "Cardo", serif; */
+  /* font-family: "Cardo", serif; */
+  max-width: 50em;
+  margin: auto;
+  font-size: 1.15em;
+  padding: 1em;
+  padding-top: 0;
+  color: #444;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    /* font-family: "Segoe UI Black";
+    font-weight: normal; */
+    /* background-color: rgb(253, 250, 242); */
+}
+
+a {
+  text-decoration-thickness: 1px;
+  color: darkgreen;
+  text-decoration-color: lightgray;
 }
 
 * {
-	box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+img {
+  margin-bottom: 1em;
+}
+
+pre > code {
+  font-size: 0.8em;
+}
+
+.half-width {
+  width: 50%;
 }
 
 #app {
-	height: 100%;
+  height: 100%;
 }
