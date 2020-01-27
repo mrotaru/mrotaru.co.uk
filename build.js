@@ -92,7 +92,10 @@ const buildDir = async ({
       assert(templates.hasOwnProperty(meta.template), `No such template: ${meta.template} (${source}${sep}${fileName})`);
       const html = templates[meta.template]({
         content: markdownToHtml(markdown, { markedOptions }),
-        meta
+        meta,
+        build: {
+          deployUrl: baseUrl,
+        },
       });
       await fs.writeFile(
         join(destination, `${basename(fileName, ".md")}.html`),
