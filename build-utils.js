@@ -2,7 +2,7 @@ const fs = require("fs").promises;
 const marked = require("marked");
 const handlebars = require("handlebars");
 const ent = require("ent");
-const tidy = require("tidy-html5");
+const tidyHtml = require("tidy-html5");
 const hljs = require('highlight.js');
 
 const estat = async path => {
@@ -38,8 +38,8 @@ const compileTemplates = async () => {
   };
 };
 
-const markdownToHtml = (markdownText, { markedOptions = {} } = {}) => {
-  const tidyOptions = {
+const tidy = html => {
+  return tidyHtml.tidy_html5(html, {
     "doctype": "omit",
     "error-file": "/dev/null",
     "indent-spaces": 2,
@@ -51,7 +51,10 @@ const markdownToHtml = (markdownText, { markedOptions = {} } = {}) => {
     "show-warnings": false,
     "tidy-mark": false,
     "wrap": 120
-  };
+  });
+}
+
+const markdownToHtml = (markdownText, { markedOptions = {} } = {}) => {
   marked.setOptions(Object.assign({ xhtml: true }, markedOptions));
   const renderer = new marked.Renderer();
   renderer.image = function (href, title, text) {
@@ -68,8 +71,7 @@ const markdownToHtml = (markdownText, { markedOptions = {} } = {}) => {
     highlight: code => hljs.highlightAuto(code).value,
   });
   const withDecodeHtmlEntities = ent.decode(htmlFromMarkdown);
-  const tidiedHtml = tidy.tidy_html5(withDecodeHtmlEntities, tidyOptions);
-  return tidiedHtml;
+  return tidy(withDecodeHtmlEntities);
 };
 
 exports.utils = {
@@ -77,5 +79,6 @@ exports.utils = {
   readJson,
   compileTemplates,
   estat,
-  markdownToHtml
+  markdownToHtml,
+  tidy,
 };

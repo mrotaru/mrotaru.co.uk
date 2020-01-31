@@ -2,18 +2,20 @@ const utils = require("util");
 const fs = require("fs").promises;
 const { join, extname, basename, sep } = require("path");
 const assert = require("assert");
+const handlebars = require("handlebars");
 const url = require("url");
 const {
   readFile,
   readJson,
   compileTemplates,
   estat,
-  markdownToHtml
+  markdownToHtml,
+  tidy,
 } = require("./build-utils").utils;
 const ncp = utils.promisify(require("ncp").ncp);
 const rimraf = utils.promisify(require("rimraf"));
 
-let indexedMetas = [];
+let metas = [];
 
 const baseUrl = process.env.BASE_URL || "http://localhost:8080";
 const buildDir = async ({
@@ -27,7 +29,7 @@ const buildDir = async ({
   if (basename(source) === '.git') {
     return;
   }
-  console.log(`buid: ${source} 🠆 ${destination} ...`);
+  console.log(`build: ${source} 🠆 ${destination} ...`);
   const entries = await fs.readdir(source);
   const stat = await estat(destination);
   if (stat) {
@@ -51,13 +53,13 @@ const buildDir = async ({
     const indexedDir = join(source, dir);
     const meta = await readJson(join(indexedDir, "meta.json"));
     const path = indexedDir.split(sep).slice(1).join(sep);
-    indexedMetas.push({ ...meta, path, url: url.resolve(baseUrl, path) });
+    metas.push({ ...meta, path, url: url.resolve(baseUrl, path) });
   }
 
   let meta = {};
   if (files.includes("meta.json")) {
     const json = await readFile(join(source, "meta.json"));
-    meta = { ...JSON.parse(json), index: indexedMetas };
+    meta = { ...JSON.parse(json), index: metas };
   }
 
   for (const dirName of dirs) {
@@ -82,24 +84,27 @@ const buildDir = async ({
     }
   }
 
+  console.log(meta);
+
   for (const fileName of files.filter(file => file !== "meta.json")) {
     const joined = join(source, fileName);
     const ext = extname(fileName);
-    if (ext === ".md") {
+    if (ext === ".md" || ext === ".html") {
+      const fileContents = await readFile(joined);
       const parentBaseUrl = url.resolve(baseUrl, parent);
-      const markdown = await readFile(joined);
       const markedOptions = { baseUrl: `${parentBaseUrl}/` };
       assert(templates.hasOwnProperty(meta.template), `No such template: ${meta.template} (${source}${sep}${fileName})`);
-      const html = templates[meta.template]({
-        content: markdownToHtml(markdown, { markedOptions }),
-        meta,
-        build: {
-          deployUrl: baseUrl,
-        },
+      const templateParams = { meta, build: { deployUrl: baseUrl } };
+      const contentHtml = ext === ".md"
+        ? markdownToHtml(fileContents, { markedOptions })
+        : handlebars.compile(fileContents)(templateParams);
+      const pageHtml = templates[meta.template]({
+        content: tidy(contentHtml),
+        ...templateParams,
       });
       await fs.writeFile(
-        join(destination, `${basename(fileName, ".md")}.html`),
-        html,
+        join(destination, `${basename(fileName, ext)}.html`),
+        pageHtml,
         { encoding: "utf8" }
       );
     } else {
