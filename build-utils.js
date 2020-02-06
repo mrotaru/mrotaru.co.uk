@@ -4,6 +4,7 @@ const handlebars = require("handlebars");
 const ent = require("ent");
 const tidyHtml = require("tidy-html5");
 const hljs = require('highlight.js');
+const sanitize = require('sanitize-html');
 
 const estat = async path => {
   try {
@@ -68,10 +69,17 @@ const markdownToHtml = (markdownText, { markedOptions = {} } = {}) => {
   };
   const htmlFromMarkdown = marked(markdownText, {
     renderer,
-    highlight: code => hljs.highlightAuto(code).value,
+    highlight: (code, lang) => {
+      return lang === "js"
+        ? hljs.highlightAuto(code).value
+        : code
+    },
+    // highlight: code => code,
   });
-  const withDecodeHtmlEntities = ent.decode(htmlFromMarkdown);
-  return tidy(withDecodeHtmlEntities);
+  // const withDecodeHtmlEntities = ent.decode(htmlFromMarkdown);
+  // return tidy(withDecodeHtmlEntities);
+  return htmlFromMarkdown
+
 };
 
 exports.utils = {

@@ -84,8 +84,6 @@ const buildDir = async ({
     }
   }
 
-  console.log(meta);
-
   for (const fileName of files.filter(file => file !== "meta.json")) {
     const joined = join(source, fileName);
     const ext = extname(fileName);
