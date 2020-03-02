@@ -26,7 +26,7 @@ const buildDir = async ({
   createDestination = true,
   templates
 }) => {
-  if (basename(source) === '.git') {
+  if (basename(source) === '.git' || basename(source) === 'drafts') {
     return;
   }
   console.log(`build: ${source} 🠆 ${destination} ...`);
