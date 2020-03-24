@@ -85,11 +85,16 @@ img {
 
 pre {
   white-space: pre-wrap;
+  overflow-x: auto;
+  max-width: 90vw;
+  scrollbar-width: thin;
+  padding-bottom: 10px;
 }
 
 pre > code {
   font-size: 0.8em;
   min-width: 0;
+  white-space: pre;
 }
 
 .half-width {
